@@ -3,221 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kamran Remote Live | Pro Dashboard</title>
+    <title>Kamran Remote Live</title>
+    
+    <!-- Link to Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5077/5077241.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-        
-        body { 
-            background-color: #020617; 
-            color: #e2e8f0; 
-            font-family: 'Inter', sans-serif; 
-            overflow: hidden;
-            background-image: radial-gradient(circle at 50% -20%, #1e293b 0%, #020617 80%);
-        }
-
-        .glass-panel { 
-            background: rgba(15, 23, 42, 0.7); 
-            backdrop-filter: blur(16px); 
-            border: 1px solid rgba(56, 189, 248, 0.1); 
-        }
-
-        .stream-container { 
-            position: relative; 
-            width: 100%; 
-            height: 60vh;
-            background: #000; 
-            border-radius: 1rem; 
-            overflow: hidden; 
-            box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(56, 189, 248, 0.05);
-            border: 1px solid rgba(56, 189, 248, 0.1);
-        }
-
-        video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            transform: scaleX(-1); /* Mirror effect for webcam */
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .glow-sky { box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        body { background-color: #0a192f; color: #e2e8f0; font-family: system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+        .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.15); }
+        .stream-container { position: relative; width: 100%; height: calc(100vh - 250px); min-height: 400px; display: flex; align-items: center; justify-content: center; background: #020617; border-radius: 1rem; overflow: hidden; box-shadow: inset 0 2px 20px rgba(0,0,0,0.8); border: 1px solid rgba(56, 189, 248, 0.1); }
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
-
-    <!-- Top Navigation -->
-    <header class="glass-panel border-b border-white/5 py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+    <header class="glass-panel border-b border-sky-500/20 py-4 px-6 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center space-x-3">
-            <div class="relative">
-                <div id="pingNode" class="w-3 h-3 bg-slate-500 rounded-full"></div>
-                <div id="pingAnimation" class="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping hidden"></div>
-            </div>
-            <div>
-                <h1 class="text-sm font-bold tracking-widest text-white uppercase">Kamran <span class="text-sky-400">Remote Live</span></h1>
-                <p class="text-[10px] text-slate-500 font-mono" id="timestamp">SYSTEM READY</p>
-            </div>
+            <div id="pingDot" class="w-3 h-3 bg-slate-500 rounded-full"></div>
+            <h1 class="text-lg font-bold tracking-wide text-sky-400">Kamran Remote Live</h1>
         </div>
         
-        <div class="flex items-center gap-4">
-            <div class="hidden md:flex flex-col items-end border-r border-white/10 pr-4">
-                <span class="text-[10px] text-slate-400 uppercase tracking-tighter">Connection Strength</span>
-                <div class="flex gap-0.5 mt-1">
-                    <div class="w-1 h-2 bg-sky-500"></div>
-                    <div class="w-1 h-3 bg-sky-500"></div>
-                    <div class="w-1 h-4 bg-sky-500/30"></div>
-                </div>
-            </div>
-            <i data-lucide="settings" class="w-5 h-5 text-slate-400 cursor-pointer hover:text-white transition"></i>
-        </div>
+        <!-- Install Button -->
+        <button id="installBtn" class="hidden flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-lg">
+            <i data-lucide="download" class="w-4 h-4"></i> INSTALL APP
+        </button>
     </header>
 
-    <main class="flex-grow p-4 md:p-8 flex flex-col items-center justify-center max-w-7xl mx-auto w-full">
-        <div class="w-full flex flex-col gap-6">
-            
-            <!-- Control Bar -->
-            <div class="glass-panel rounded-2xl p-4 flex flex-wrap justify-between items-center gap-4 shadow-xl">
-                <div class="flex items-center space-x-4">
-                    <div class="px-3 py-1.5 rounded-full bg-slate-800/50 border border-white/5 flex items-center gap-2">
-                        <span id="statusIndicator" class="status-dot bg-slate-500"></span>
-                        <span id="connectionStatus" class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Offline</span>
-                    </div>
-                    <div id="bitrateDisplay" class="hidden text-[10px] font-mono text-sky-500/70">
-                        LATENCY: 24ms | 1080p
-                    </div>
+    <main class="flex-grow p-4 md:p-8 flex flex-col items-center justify-center max-w-6xl mx-auto w-full">
+        <div class="glass-panel w-full rounded-2xl p-6 shadow-2xl flex flex-col gap-6">
+            <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                <div class="flex items-center space-x-3 text-sm">
+                    <span class="text-slate-400">Status:</span>
+                    <span id="connectionStatus" class="text-amber-400 font-medium">Ready</span>
                 </div>
-
-                <div class="flex items-center gap-2">
-                    <button id="startBtn" onclick="startSession()" class="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all transform active:scale-95 shadow-lg shadow-sky-900/20">
-                        <i data-lucide="play" class="w-4 h-4"></i> START STREAM
-                    </button>
-                    <button id="stopBtn" onclick="stopSession()" class="flex items-center gap-2 bg-white/5 hover:bg-rose-600 border border-white/10 text-slate-300 hover:text-white px-5 py-2 rounded-xl text-xs font-bold transition-all transform active:scale-95">
-                        <i data-lucide="square" class="w-4 h-4"></i> STOP
-                    </button>
+                <div class="flex items-center space-x-3">
+                    <button onclick="startSession()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg text-xs font-bold">Start Stream</button>
+                    <button onclick="stopSession()" class="bg-slate-800 hover:bg-rose-600 text-slate-300 px-5 py-2 rounded-lg text-xs font-bold">Stop</button>
                 </div>
             </div>
 
-            <!-- Video Viewport -->
-            <div class="stream-container group">
-                <!-- Overlay Elements -->
-                <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                    <div class="bg-black/40 backdrop-blur-md px-2 py-1 rounded border border-white/10 text-[10px] font-mono text-emerald-400">
-                        REC ●
-                    </div>
+            <div class="stream-container">
+                <div id="placeholderView" class="text-center p-6 flex flex-col items-center justify-center">
+                    <p class="text-slate-400 text-sm font-medium">Capture Offline</p>
                 </div>
-                
-                <div id="placeholderView" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/40">
-                    <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10">
-                        <i data-lucide="video-off" class="w-8 h-8 text-slate-500"></i>
-                    </div>
-                    <p class="text-slate-400 text-sm font-medium">No Active Remote Feed</p>
-                    <p class="text-slate-600 text-xs mt-1">Initialize stream to begin monitoring</p>
-                </div>
-
-                <video id="remoteVideo" autoplay playsinline></video>
-                
-                <!-- Bottom Video UI -->
-                <div class="absolute bottom-4 right-4 z-10">
-                    <button onclick="toggleFullscreen()" class="p-2 bg-black/40 hover:bg-black/60 rounded-lg backdrop-blur-md border border-white/10 transition">
-                        <i data-lucide="maximize" class="w-4 h-4 text-white"></i>
-                    </button>
-                </div>
+                <video id="remoteVideo" autoplay playsinline class="hidden"></video>
             </div>
         </div>
     </main>
 
-    <footer class="py-4 px-8 flex justify-between items-center text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-        <p>© 2026 Create by Kamran Khan</p>
-        <p>Encrypted Endpoint: SEC-00x921</p>
+    <footer class="glass-panel py-4 text-center text-[10px] text-slate-500 mt-auto uppercase tracking-widest">
+        <p>Copyright © 2026 Create by Kamran Khan</p>
     </footer>
 
     <script>
-        // Initialize Icons
         lucide.createIcons();
-
         const video = document.getElementById('remoteVideo');
         const placeholder = document.getElementById('placeholderView');
-        const statusText = document.getElementById('connectionStatus');
-        const statusDot = document.getElementById('statusIndicator');
-        const pingNode = document.getElementById('pingNode');
-        const pingAnim = document.getElementById('pingAnimation');
-        const bitrate = document.getElementById('bitrateDisplay');
+        const installBtn = document.getElementById('installBtn');
+        let deferredPrompt;
 
-        let stream = null;
-
+        // Camera Logic
         async function startSession() {
             try {
-                // Update UI to "Connecting"
-                statusText.innerText = "Connecting...";
-                statusDot.className = "status-dot bg-amber-500 animate-pulse";
-                
-                // Request Access to Local Media (This acts as the remote feed demo)
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 } 
-                    }, 
-                    audio: false 
-                });
-
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-                
-                // Transition UI
-                setTimeout(() => {
-                    placeholder.classList.add('hidden');
-                    statusText.innerText = "Live: Secure Connection";
-                    statusText.classList.remove('text-slate-300');
-                    statusText.classList.add('text-emerald-400');
-                    statusDot.className = "status-dot bg-emerald-500 glow-sky";
-                    pingNode.className = "w-3 h-3 bg-emerald-500 rounded-full";
-                    pingAnim.classList.remove('hidden');
-                    bitrate.classList.remove('hidden');
-                }, 800);
-
-            } catch (err) {
-                console.error("Error accessing camera: ", err);
-                statusText.innerText = "Error: Access Denied";
-                statusDot.className = "status-dot bg-rose-500";
-            }
+                placeholder.classList.add('hidden');
+                video.classList.remove('hidden');
+                document.getElementById('connectionStatus').innerText = "Live";
+                document.getElementById('pingDot').className = "w-3 h-3 bg-emerald-400 rounded-full animate-pulse";
+            } catch (err) { alert("Camera not found"); }
         }
 
         function stopSession() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                video.srcObject = null;
-            }
-            
+            if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+            video.classList.add('hidden');
             placeholder.classList.remove('hidden');
-            statusText.innerText = "Disconnected";
-            statusText.className = "text-xs font-semibold text-rose-400 uppercase tracking-wider";
-            statusDot.className = "status-dot bg-rose-500";
-            pingNode.className = "w-3 h-3 bg-slate-500 rounded-full";
-            pingAnim.classList.add('hidden');
-            bitrate.classList.add('hidden');
+            document.getElementById('connectionStatus').innerText = "Disconnected";
         }
 
-        function toggleFullscreen() {
-            if (video.requestFullscreen) {
-                video.requestFullscreen();
+        // PWA Install Logic
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.classList.remove('hidden');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') installBtn.classList.add('hidden');
+                deferredPrompt = null;
             }
-        }
+        });
 
-        // Clock Update
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('timestamp').innerText = `SYSTEM OSC: ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()} - UTC+5`;
-        }, 1000);
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
     </script>
 </body>
 </html>
+
+
+
+
+
